@@ -24,8 +24,8 @@ subject to the following restrictions:
 #include "LinearMath/btQuickprof.h"
 #include "LinearMath/btIDebugDraw.h"
 
-#include "BunnyMesh.h"
-#include "TorusMesh.h"
+#include "../GimpactTestDemo/BunnyMesh.h"
+#include "../GimpactTestDemo/TorusMesh.h"
 #include <stdio.h> //printf debugging
 #include "LinearMath/btConvexHull.h"
 #include "BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h"
@@ -33,200 +33,8 @@ subject to the following restrictions:
 
 #include "SoftDemo.h"
 #include "GL_ShapeDrawer.h"
-
-
-#include "LinearMath/btAlignedObjectArray.h"
-#include "BulletSoftBody/btSoftBody.h"
-
-
-class btBroadphaseInterface;
-class btCollisionShape;
-class btOverlappingPairCache;
-class btCollisionDispatcher;
-class btConstraintSolver;
-struct btCollisionAlgorithmCreateFunc;
-class btDefaultCollisionConfiguration;
-
-///collisions between two btSoftBody's
-class btSoftSoftCollisionAlgorithm;
-
-///collisions between a btSoftBody and a btRigidBody
-class btSoftRididCollisionAlgorithm;
-class btSoftRigidDynamicsWorld;
-
-#include "../CommonInterfaces/CommonRigidBodyBase.h"
-
-
-class SoftDemo : public CommonRigidBodyBase
-{
-public:
-
-	btAlignedObjectArray<btSoftSoftCollisionAlgorithm*> m_SoftSoftCollisionAlgorithms;
-
-	btAlignedObjectArray<btSoftRididCollisionAlgorithm*> m_SoftRigidCollisionAlgorithms;
-
-	btSoftBodyWorldInfo	m_softBodyWorldInfo;
-
-	
-
-	bool								m_autocam;
-	bool								m_cutting;
-	bool								m_raycast;
-	btScalar							m_animtime;
-	btClock								m_clock;
-	int									m_lastmousepos[2];
-	btVector3							m_impact;
-	btSoftBody::sRayCast				m_results;
-	btSoftBody::Node*					m_node;
-	btVector3							m_goal;
-	bool								m_drag;
-
-
-	//keep the collision shapes, for deletion/cleanup
-	btAlignedObjectArray<btCollisionShape*>		m_collisionShapes;
-
-	btBroadphaseInterface*	m_broadphase;
-
-	btCollisionDispatcher*	m_dispatcher;
-
-
-	btConstraintSolver*	m_solver;
-
-	btCollisionAlgorithmCreateFunc*	m_boxBoxCF;
-
-	btDefaultCollisionConfiguration* m_collisionConfiguration;
-
-
-public:
-
-	void	initPhysics();
-
-	void	exitPhysics();
-
-	virtual void resetCamera()
-	{
-		//@todo depends on current_demo?
-		float dist = 45;
-		float pitch = 27;
-		float yaw = 31;
-		float targetPos[3]={10-1,0};
-		m_guiHelper->resetCamera(dist,pitch,yaw,targetPos[0],targetPos[1],targetPos[2]);
-	}
-
-	SoftDemo(struct GUIHelperInterface* helper) 
-		: CommonRigidBodyBase(helper),
-		m_drag(false)
-
-	{
-		
-	}
-	virtual ~SoftDemo()
-	{
-		btAssert(m_dynamicsWorld==0);
-	}
-
-	//virtual void clientMoveAndDisplay();
-
-	//virtual void displayCallback();
-
-	void createStack( btCollisionShape* boxShape, float halfCubeSize, int size, float zPos );
-
-	
-
-	virtual	void setDrawClusters(bool drawClusters);
-
-	virtual const btSoftRigidDynamicsWorld*	getSoftDynamicsWorld() const
-	{
-		///just make it a btSoftRigidDynamicsWorld please
-		///or we will add type checking
-		return (btSoftRigidDynamicsWorld*) m_dynamicsWorld;
-	}
-
-	virtual btSoftRigidDynamicsWorld*	getSoftDynamicsWorld()
-	{
-		///just make it a btSoftRigidDynamicsWorld please
-		///or we will add type checking
-		return (btSoftRigidDynamicsWorld*) m_dynamicsWorld;
-	}
-
-	//
-	//void	clientResetScene();
-	void	renderme();
-	void	keyboardCallback(unsigned char key, int x, int y);
-	void	mouseFunc(int button, int state, int x, int y);
-	void	mouseMotionFunc(int x,int y);
-
-	GUIHelperInterface*	getGUIHelper()
-	{
-		return m_guiHelper;
-	}
-
-	virtual void renderScene()
-	{
-		CommonRigidBodyBase::renderScene();
-		btSoftRigidDynamicsWorld* softWorld = getSoftDynamicsWorld();
-
-		for (  int i=0;i<softWorld->getSoftBodyArray().size();i++)
-		{
-			btSoftBody*	psb=(btSoftBody*)softWorld->getSoftBodyArray()[i];
-			if (softWorld->getDebugDrawer() && !(softWorld->getDebugDrawer()->getDebugMode() & (btIDebugDraw::DBG_DrawWireframe)))
-			{
-				btSoftBodyHelpers::DrawFrame(psb,softWorld->getDebugDrawer());
-				btSoftBodyHelpers::Draw(psb,softWorld->getDebugDrawer(),softWorld->getDrawFlags());
-			}
-		}
-	}
-};
-
-
-#define MACRO_SOFT_DEMO(a) class SoftDemo##a : public SoftDemo\
-{\
-public:\
-	static DemoApplication* Create()\
-	{\
-		SoftDemo* demo = new SoftDemo##a;\
-		extern int current_demo;\
-		current_demo=a;\
-		demo->initPhysics();\
-		return demo;\
-	}\
-};
-
-
-
-//MACRO_SOFT_DEMO(0) //Init_Cloth
-#if 0
-MACRO_SOFT_DEMO(1) //Init_Pressure
-MACRO_SOFT_DEMO(2)//Init_Volume
-MACRO_SOFT_DEMO(3)//Init_Ropes
-MACRO_SOFT_DEMO(4)//Init_Ropes_Attach
-MACRO_SOFT_DEMO(5)//Init_ClothAttach
-MACRO_SOFT_DEMO(6)//Init_Sticks
-MACRO_SOFT_DEMO(7)//Init_Collide
-MACRO_SOFT_DEMO(8)//Init_Collide2
-MACRO_SOFT_DEMO(9)//Init_Collide3
-MACRO_SOFT_DEMO(10)//Init_Impact
-MACRO_SOFT_DEMO(11)//Init_Aero
-MACRO_SOFT_DEMO(12)//Init_Friction
-MACRO_SOFT_DEMO(13)//Init_Torus
-MACRO_SOFT_DEMO(14)//Init_TorusMatch
-MACRO_SOFT_DEMO(15)//Init_Bunny
-MACRO_SOFT_DEMO(16)//Init_BunnyMatch
-MACRO_SOFT_DEMO(17)//Init_Cutting1
-MACRO_SOFT_DEMO(18)//Init_ClusterDeform
-MACRO_SOFT_DEMO(19)//Init_ClusterCollide1
-MACRO_SOFT_DEMO(20)//Init_ClusterCollide2
-MACRO_SOFT_DEMO(21)//Init_ClusterSocket
-MACRO_SOFT_DEMO(22)//Init_ClusterHinge
-MACRO_SOFT_DEMO(23)//Init_ClusterCombine
-MACRO_SOFT_DEMO(24)//Init_ClusterCar
-MACRO_SOFT_DEMO(25)//Init_ClusterRobot
-MACRO_SOFT_DEMO(26)//Init_ClusterStackSoft
-MACRO_SOFT_DEMO(27)//Init_ClusterStackMixed
-MACRO_SOFT_DEMO(28)//Init_TetraCube
-MACRO_SOFT_DEMO(29)//Init_TetraBunny
-
-#endif
+#include "GLDebugFont.h"
+#include "GlutStuff.h"
 
 extern float eye[3];
 extern int glutScreenWidth;
@@ -260,6 +68,149 @@ const int maxNumObjects = 32760;
 #define EXTRA_HEIGHT -10.f
 
 
+#ifdef USE_AMD_OPENCL
+#include "btOpenCLUtils.h"
+#include "BulletMultiThreaded/GpuSoftBodySolvers/OpenCL/btSoftBodySolver_OpenCL.h"
+#include "BulletMultiThreaded/GpuSoftBodySolvers/OpenCL/btSoftBodySolver_OpenCLSIMDAware.h"
+#include "BulletMultiThreaded/GpuSoftBodySolvers/OpenCL/btSoftBodySolverVertexBuffer_OpenGL.h"
+
+btOpenCLSoftBodySolver* g_openCLSIMDSolver=0;
+btSoftBodySolverOutputCLtoCPU* g_softBodyOutput = 0;
+
+cl_context			g_cxMainContext;
+cl_device_id		g_cdDevice;
+cl_command_queue	g_cqCommandQue;
+
+void initCL( void* glCtx, void* glDC )
+{
+	int ciErrNum = 0;
+
+#if defined(CL_PLATFORM_MINI_CL)
+	cl_device_type deviceType = CL_DEVICE_TYPE_CPU;//or use CL_DEVICE_TYPE_DEBUG to debug MiniCL
+#elif defined(CL_PLATFORM_INTEL)
+	cl_device_type deviceType = CL_DEVICE_TYPE_CPU;
+#elif defined(CL_PLATFORM_AMD)
+	cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
+#elif defined(CL_PLATFORM_NVIDIA)
+	cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
+#else
+#ifdef __APPLE__
+	cl_device_type deviceType = CL_DEVICE_TYPE_ALL;//GPU;
+#else
+	cl_device_type deviceType = CL_DEVICE_TYPE_CPU;//CL_DEVICE_TYPE_ALL
+#endif//__APPLE__
+#endif
+	
+	g_cxMainContext = btOpenCLUtils::createContextFromType(deviceType, &ciErrNum, glCtx, glDC);
+	oclCHECKERROR(ciErrNum, CL_SUCCESS);
+
+	
+	int numDev = btOpenCLUtils::getNumDevices(g_cxMainContext);
+	if (!numDev)
+	{
+		btAssert(0);
+		exit(0);//this is just a demo, exit now
+	}
+
+	g_cdDevice = btOpenCLUtils::getDevice(g_cxMainContext,0);
+	oclCHECKERROR(ciErrNum, CL_SUCCESS);
+
+	btOpenCLDeviceInfo clInfo;
+	btOpenCLUtils::getDeviceInfo(g_cdDevice,clInfo);
+	btOpenCLUtils::printDeviceInfo(g_cdDevice);
+	
+	// create a command-queue
+	g_cqCommandQue = clCreateCommandQueue(g_cxMainContext, g_cdDevice, 0, &ciErrNum);
+	oclCHECKERROR(ciErrNum, CL_SUCCESS);
+}
+
+class CachingCLFunctions : public CLFunctions
+{
+protected:
+
+	cl_device_id		m_device;
+
+	const char* strip(const char* name, const char* pattern);
+
+public:
+	CachingCLFunctions(cl_command_queue cqCommandQue, cl_context cxMainContext) :
+		CLFunctions(cqCommandQue,cxMainContext)
+	{
+		size_t actualSize;
+		cl_int retval = clGetCommandQueueInfo (	cqCommandQue, CL_QUEUE_DEVICE, sizeof(cl_device_id),
+			&m_device, &actualSize);
+	}
+
+	/**
+	 * Compile a compute shader kernel from a string and return the appropriate cl_kernel object.
+	 */	
+	virtual cl_kernel compileCLKernelFromString( const char* kernelSource, const char* kernelName, const char* additionalMacros , const char* orgSrcFileNameForCaching)
+	{
+		char srcFileNameForCaching[1024];
+		sprintf(srcFileNameForCaching,"%s/%s","../../src/BulletMultiThreaded/GpuSoftBodySolvers/OpenCL",orgSrcFileNameForCaching);
+
+		btAssert(additionalMacros);
+		btAssert(srcFileNameForCaching && strlen(srcFileNameForCaching));
+
+		printf("compiling kernelName: %s ",kernelName);
+		cl_kernel kernel=0;
+		cl_int ciErrNum;
+
+
+		size_t program_length = strlen(kernelSource);
+
+		cl_program m_cpProgram = btOpenCLUtils::compileCLProgramFromString(m_cxMainContext, m_device, kernelSource,  &ciErrNum, additionalMacros);
+
+		
+		// Create the kernel
+		kernel = clCreateKernel(m_cpProgram, kernelName, &ciErrNum);
+		if (ciErrNum != CL_SUCCESS)
+		{
+			const char* msg = "";
+			switch(ciErrNum)
+			{
+			case CL_INVALID_PROGRAM:
+				msg = "Program is not a valid program object.";
+				break;
+			case CL_INVALID_PROGRAM_EXECUTABLE:
+				msg = "There is no successfully built executable for program.";
+				break;
+			case CL_INVALID_KERNEL_NAME:
+				msg = "kernel_name is not found in program.";
+				break;
+			case CL_INVALID_KERNEL_DEFINITION:
+				msg = "the function definition for __kernel function given by kernel_name such as the number of arguments, the argument types are not the same for all devices for which the program executable has been built.";
+				break;
+			case CL_INVALID_VALUE:
+				msg = "kernel_name is NULL.";
+				break;
+			case CL_OUT_OF_HOST_MEMORY:
+				msg = "Failure to allocate resources required by the OpenCL implementation on the host.";
+				break;
+			default:
+				{
+				}
+			}
+
+			printf("Error in clCreateKernel for kernel '%s', error is \"%s\", Line %u in file %s !!!\n\n", kernelName, msg, __LINE__, __FILE__);
+
+	#ifndef BT_SUPPRESS_OPENCL_ASSERTS
+			btAssert(0);
+	#endif //BT_SUPPRESS_OPENCL_ASSERTS
+			m_kernelCompilationFailures++;
+			return 0;
+		}
+
+		printf("ready. \n");
+		if (!kernel)
+			m_kernelCompilationFailures++;
+		return kernel;
+	}
+
+};
+
+
+#endif //USE_AMD_OPENCL
 
 //
 void SoftDemo::createStack( btCollisionShape* boxShape, float halfCubeSize, int size, float zPos )
@@ -283,7 +234,7 @@ void SoftDemo::createStack( btCollisionShape* boxShape, float halfCubeSize, int 
 			btScalar mass = 1.f;
 
 			btRigidBody* body = 0;
-			body = createRigidBody(mass,trans,boxShape);
+			body = localCreateRigidBody(mass,trans,boxShape);
 
 		}
 	}
@@ -304,18 +255,10 @@ void pickingPreTickCallback (btDynamicsWorld *world, btScalar timeStep)
 	{
 		const int				x=softDemo->m_lastmousepos[0];
 		const int				y=softDemo->m_lastmousepos[1];
-		float rf[3];
-		softDemo->getGUIHelper()->getRenderInterface()->getActiveCamera()->getCameraPosition(rf);
-		float target[3];
-		softDemo->getGUIHelper()->getRenderInterface()->getActiveCamera()->getCameraTargetPosition(target);
-		btVector3 cameraTargetPosition(target[0],target[1],target[2]);
-		
-		const btVector3			cameraPosition(rf[0],rf[1],rf[2]);
-		const btVector3			rayFrom=cameraPosition;
-
+		const btVector3			rayFrom=softDemo->getCameraPosition();
 		const btVector3			rayTo=softDemo->getRayTo(x,y);
 		const btVector3			rayDir=(rayTo-rayFrom).normalized();
-		const btVector3			N=(cameraTargetPosition-cameraPosition).normalized();
+		const btVector3			N=(softDemo->getCameraTargetPosition()-softDemo->getCameraPosition()).normalized();
 		const btScalar			O=btDot(softDemo->m_impact,N);
 		const btScalar			den=btDot(N,rayDir);
 		if((den*den)>0)
@@ -340,6 +283,16 @@ void pickingPreTickCallback (btDynamicsWorld *world, btScalar timeStep)
 
 
 
+void SoftDemo::displayCallback(void) {
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+
+
+	renderme();
+
+	glFlush();
+	swapBuffers();
+}
 
 
 //
@@ -424,8 +377,8 @@ static void	Ctor_RbUpStack(SoftDemo* pdemo,int count)
 		btTransform startTransform;
 		startTransform.setIdentity();
 		startTransform.setOrigin(btVector3(0,2+6*i,0));
-		pdemo->createRigidBody(mass,startTransform,shape[i%nshapes]);
-		//pdemo->createRigidBody(mass,startTransform,shape[0]);
+		pdemo->localCreateRigidBody(mass,startTransform,shape[i%nshapes]);
+		//pdemo->localCreateRigidBody(mass,startTransform,shape[0]);
 	}
 }
 
@@ -437,7 +390,7 @@ static void	Ctor_BigBall(SoftDemo* pdemo,btScalar mass=10)
 	btTransform startTransform;
 	startTransform.setIdentity();
 	startTransform.setOrigin(btVector3(0,13,0));
-	pdemo->createRigidBody(mass,startTransform,new btSphereShape(3));
+	pdemo->localCreateRigidBody(mass,startTransform,new btSphereShape(3));
 }
 
 //
@@ -448,7 +401,7 @@ static btRigidBody*	Ctor_BigPlate(SoftDemo* pdemo,btScalar mass=15,btScalar heig
 	btTransform startTransform;
 	startTransform.setIdentity();
 	startTransform.setOrigin(btVector3(0,height,0.5));
-	btRigidBody*		body=pdemo->createRigidBody(mass,startTransform,new btBoxShape(btVector3(5,1,5)));
+	btRigidBody*		body=pdemo->localCreateRigidBody(mass,startTransform,new btBoxShape(btVector3(5,1,5)));
 	body->setFriction(1);
 	return(body);
 }
@@ -464,7 +417,7 @@ static void Ctor_LinearStair(SoftDemo* pdemo,const btVector3& org,const btVector
 		btTransform startTransform;
 		startTransform.setIdentity();
 		startTransform.setOrigin(org+btVector3(sizes.x()*i*2,sizes.y()*i*2,0));
-		btRigidBody* body=pdemo->createRigidBody(0,startTransform,shape);
+		btRigidBody* body=pdemo->localCreateRigidBody(0,startTransform,shape);
 		body->setFriction(1);
 	}
 }
@@ -552,7 +505,7 @@ static void	Init_RopeAttach(SoftDemo* pdemo)
 	btTransform startTransform;
 	startTransform.setIdentity();
 	startTransform.setOrigin(btVector3(12,8,0));
-	btRigidBody*		body=pdemo->createRigidBody(50,startTransform,new btBoxShape(btVector3(2,6,2)));
+	btRigidBody*		body=pdemo->localCreateRigidBody(50,startTransform,new btBoxShape(btVector3(2,6,2)));
 	btSoftBody*	psb0=Functors::CtorRope(pdemo,btVector3(0,8,-1));
 	btSoftBody*	psb1=Functors::CtorRope(pdemo,btVector3(0,8,+1));
 	psb0->appendAnchor(psb0->m_nodes.size()-1,body);
@@ -577,7 +530,7 @@ static void	Init_ClothAttach(SoftDemo* pdemo)
 	btTransform startTransform;
 	startTransform.setIdentity();
 	startTransform.setOrigin(btVector3(0,h,-(s+3.5)));
-	btRigidBody*		body=pdemo->createRigidBody(20,startTransform,new btBoxShape(btVector3(s,1,3)));
+	btRigidBody*		body=pdemo->localCreateRigidBody(20,startTransform,new btBoxShape(btVector3(s,1,3)));
 	psb->appendAnchor(0,body);
 	psb->appendAnchor(r-1,body);
 	pdemo->m_cutting=true;
@@ -598,7 +551,7 @@ static void	Init_Impact(SoftDemo* pdemo)
 	btTransform startTransform;
 	startTransform.setIdentity();
 	startTransform.setOrigin(btVector3(0,20,0));
-	pdemo->createRigidBody(10,startTransform,new btBoxShape(btVector3(2,2,2)));
+	pdemo->localCreateRigidBody(10,startTransform,new btBoxShape(btVector3(2,2,2)));
 }
 
 static void	Init_CapsuleCollision(SoftDemo* pdemo)
@@ -622,8 +575,8 @@ static void	Init_CapsuleCollision(SoftDemo* pdemo)
 	capsuleShape->setMargin( 0.5 );
 
 	//	capsule->setLocalScaling(btVector3(5,1,1));
-//	btRigidBody*		body=pdemo->createRigidBody(20,startTransform,capsuleShape);
-	btRigidBody*		body=pdemo->createRigidBody(0,startTransform,capsuleShape);
+//	btRigidBody*		body=pdemo->localCreateRigidBody(20,startTransform,capsuleShape);
+	btRigidBody*		body=pdemo->localCreateRigidBody(0,startTransform,capsuleShape);
 	body->setFriction( 0.8f );
 
 	int fixed=0;//4+8;
@@ -775,9 +728,9 @@ static void	Init_Aero(SoftDemo* pdemo)
 		btSoftBody::Material*	pm=psb->appendMaterial();
 		pm->m_flags				-=	btSoftBody::fMaterial::DebugDraw;
 		psb->generateBendingConstraints(2,pm);
-		psb->m_cfg.kLF			=	0.004;
-		psb->m_cfg.kDG			=	0.0003;
-		psb->m_cfg.aeromodel	=	btSoftBody::eAeroModel::V_TwoSided;
+		psb->m_aeroForce.m_liftCoeff =	0.004;
+		psb->m_aeroForce.m_dragCoeff =	0.0003;
+		psb->m_aeroForce.m_model = btSoftBody::eAeroModel::V_TwoSided;
 		btTransform		trs;
 		btQuaternion	rot;
 		btVector3		ra=Vector3Rand()*0.1;
@@ -821,17 +774,14 @@ static void	Init_Aero2(SoftDemo* pdemo)
 		pm->m_flags		-=	btSoftBody::fMaterial::DebugDraw;
 		psb->generateBendingConstraints(2,pm);
 		
-		psb->m_cfg.kLF			=	0.05;
-		psb->m_cfg.kDG			=	0.01;
-
-		//psb->m_cfg.kLF			=	0.004;
-		//psb->m_cfg.kDG			=	0.0003;
+		psb->m_aeroForce.m_liftCoeff = 0.05;
+		psb->m_aeroForce.m_dragCoeff = 0.01;
 
 		psb->m_cfg.piterations = 2;
-		psb->m_cfg.aeromodel	=	btSoftBody::eAeroModel::V_TwoSidedLiftDrag;
+		psb->m_aeroForce.m_model = btSoftBody::eAeroModel::V_TwoSidedLiftDrag;
 
 		
-		psb->setWindVelocity(btVector3(4, -12.0, -25.0));
+		psb->m_aeroForce.m_windVelocity = btVector3(4, -12.0, -25.0);
 
 		btTransform		trs;
 		btQuaternion	rot;
@@ -1123,7 +1073,7 @@ static void			Ctor_Gear(SoftDemo* pdemo,const btVector3& pos,btScalar speed)
 	shape->addChildShape(btTransform(btQuaternion(0,0,0)),new btCylinderShapeZ(btVector3(5,1,7)));
 	shape->addChildShape(btTransform(btQuaternion(0,0,SIMD_HALF_PI)),new btBoxShape(btVector3(4,1,8)));
 #endif
-	btRigidBody*		body=pdemo->createRigidBody(10,startTransform,shape);
+	btRigidBody*		body=pdemo->localCreateRigidBody(10,startTransform,shape);
 	body->setFriction(1);
 	btDynamicsWorld*	world=pdemo->getDynamicsWorld();
 	btHingeConstraint*	hinge=new btHingeConstraint(*body,btTransform::getIdentity());
@@ -1345,7 +1295,7 @@ static void	Init_ClusterCombine(SoftDemo* pdemo)
 //
 static void	Init_ClusterCar(SoftDemo* pdemo)
 {
-//	pdemo->setAzi(180);
+	pdemo->setAzi(180);
 	const btVector3		origin(100,80,0);
 	const btQuaternion	orientation(-SIMD_PI/2,0,0);
 	const btScalar	widthf=8;
@@ -1444,7 +1394,7 @@ static void	Init_ClusterRobot(SoftDemo* pdemo)
 	btSoftBody*			psb2=Functor::CreateBall(pdemo,base+btVector3(0,0,+8*btSqrt(2)));
 	const btVector3		ctr=(psb0->clusterCom(0)+psb1->clusterCom(0)+psb2->clusterCom(0))/3;
 	btCylinderShape*	pshp=new btCylinderShape(btVector3(8,1,8));
-	btRigidBody*		prb=pdemo->createRigidBody(50,btTransform(btQuaternion(0,0,0),ctr+btVector3(0,5,0)),pshp);
+	btRigidBody*		prb=pdemo->localCreateRigidBody(50,btTransform(btQuaternion(0,0,0),ctr+btVector3(0,5,0)),pshp);
 	btSoftBody::LJoint::Specs	ls;
 	ls.erp=0.5f;
 	ls.position=psb0->clusterCom(0);psb0->appendLinearJoint(ls,prb);
@@ -1452,7 +1402,7 @@ static void	Init_ClusterRobot(SoftDemo* pdemo)
 	ls.position=psb2->clusterCom(0);psb2->appendLinearJoint(ls,prb);
 
 	btBoxShape*			pbox=new btBoxShape(btVector3(20,1,40));
-	btRigidBody*		pgrn=pdemo->createRigidBody(0,btTransform(btQuaternion(0,-SIMD_HALF_PI/2,0),btVector3(0,0,0)),pbox);
+	btRigidBody*		pgrn=pdemo->localCreateRigidBody(0,btTransform(btQuaternion(0,-SIMD_HALF_PI/2,0),btVector3(0,0,0)),pbox);
 
 	pdemo->m_autocam=true;
 
@@ -1589,14 +1539,13 @@ static void	Init_TetraCube(SoftDemo* pdemo)
 		Init_TetraBunny,
 	};
 
-#if 0
 void	SoftDemo::clientResetScene()
 {
 	m_azi = 0;
 	m_cameraDistance = 30.f;
 	m_cameraTargetPosition.setValue(0,0,0);
 
-	
+	DemoApplication::clientResetScene();
 	/* Clean up	*/ 
 	for(int i=m_dynamicsWorld->getNumCollisionObjects()-1;i>=0;i--)
 	{
@@ -1628,10 +1577,56 @@ void	SoftDemo::clientResetScene()
 	}
 
 
+	//create ground object
+	btTransform tr;
+	tr.setIdentity();
+	tr.setOrigin(btVector3(0,-12,0));
+
+	btCollisionObject* newOb = new btCollisionObject();
+	newOb->setWorldTransform(tr);
+	newOb->setInterpolationWorldTransform( tr);
+	int lastDemo = (sizeof(demofncs)/sizeof(demofncs[0]))-1;
+
+	if (current_demo<0)
+		current_demo = lastDemo;
+	if (current_demo > lastDemo)
+		current_demo =0;
+		
+
+	if (current_demo>19)
+	{
+		newOb->setCollisionShape(m_collisionShapes[0]);
+	} else
+	{
+		newOb->setCollisionShape(m_collisionShapes[1]);
+	}
+
+	m_dynamicsWorld->addCollisionObject(newOb);
+
+	m_softBodyWorldInfo.m_sparsesdf.Reset();
+
+
+
+
+
 	
+
+	motorcontrol.goal = 0;
+	motorcontrol.maxtorque = 0;
+
+
+
+	m_softBodyWorldInfo.m_gravity.setValue(0,-10,0);
+
+
+	m_autocam						=	false;
+	m_raycast						=	false;
+	m_cutting						=	false;
+	m_results.fraction				=	1.f;
+	demofncs[current_demo](this);
 }
 
-#if 0
+
 void SoftDemo::clientMoveAndDisplay()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT); 
@@ -1737,10 +1732,9 @@ void SoftDemo::clientMoveAndDisplay()
 	swapBuffers();
 
 }
-#endif
 
 
-#if 0
+
 void	SoftDemo::renderme()
 {
 	btIDebugDraw*	idraw=m_dynamicsWorld->getDebugDrawer();
@@ -1864,24 +1858,8 @@ void	SoftDemo::renderme()
 		}
 #undef RES
 	}
-	/* Water level	*/ 
-	static const btVector3	axis[]={btVector3(1,0,0),
-		btVector3(0,1,0),
-		btVector3(0,0,1)};
-	if(m_softBodyWorldInfo.water_density>0)
-	{
-		const btVector3	c=	btVector3((btScalar)0.25,(btScalar)0.25,1);
-		const btScalar	a=	(btScalar)0.5;
-		const btVector3	n=	m_softBodyWorldInfo.water_normal;
-		const btVector3	o=	-n*m_softBodyWorldInfo.water_offset;
-		const btVector3	x=	btCross(n,axis[n.minAxis()]).normalized();
-		const btVector3	y=	btCross(x,n).normalized();
-		const btScalar	s=	25;
-		idraw->drawTriangle(o-x*s-y*s,o+x*s-y*s,o+x*s+y*s,c,a);
-		idraw->drawTriangle(o-x*s-y*s,o+x*s+y*s,o-x*s+y*s,c,a);
-	}
+	
 	//
-
 	int lineWidth=280;
 	int xStart = m_glutScreenWidth - lineWidth;
 	int yStart = 20;
@@ -1927,8 +1905,6 @@ void	SoftDemo::renderme()
 	DemoApplication::renderme();
 
 }
-#endif
-#endif
 
 void	SoftDemo::setDrawClusters(bool drawClusters)
 {
@@ -1942,7 +1918,7 @@ void	SoftDemo::setDrawClusters(bool drawClusters)
 }
 
 
-#if 0
+
 void	SoftDemo::keyboardCallback(unsigned char key, int x, int y)
 {
 	switch(key)
@@ -1970,7 +1946,7 @@ void	SoftDemo::keyboardCallback(unsigned char key, int x, int y)
 	default:		DemoApplication::keyboardCallback(key,x,y);
 	}
 }
-#endif
+
 //
 void	SoftDemo::mouseMotionFunc(int x,int y)
 {
@@ -1991,9 +1967,12 @@ void	SoftDemo::mouseMotionFunc(int x,int y)
 			m_lastmousepos[1]	=	y;		
 		}
 	}
+	else
+	{
+		DemoApplication::mouseMotionFunc(x,y);
+	}
 }
 
-#if 0
 //
 void	SoftDemo::mouseFunc(int button, int state, int x, int y)
 {
@@ -2083,14 +2062,14 @@ void	SoftDemo::mouseFunc(int button, int state, int x, int y)
 		DemoApplication::mouseFunc(button,state,x,y);
 	}
 }
-#endif
+
 
 void	SoftDemo::initPhysics()
 {
 	///create concave ground mesh
 
-	m_guiHelper->setUpAxis(1);
-//	m_azi = 0;
+	
+	m_azi = 0;
 
 	//reset and disable motorcontrol at the start
 	motorcontrol.goal = 0;
@@ -2233,66 +2212,11 @@ void	SoftDemo::initPhysics()
 	m_dynamicsWorld->getDispatchInfo().m_enableSPU = true;
 	m_dynamicsWorld->setGravity(btVector3(0,-10,0));
 	m_softBodyWorldInfo.m_gravity.setValue(0,-10,0);
-	m_guiHelper->createPhysicsDebugDrawer(world);
+
 	//	clientResetScene();
 
 	m_softBodyWorldInfo.m_sparsesdf.Initialize();
-//	clientResetScene();
-
-	//create ground object
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(btVector3(0,-12,0));
-
-	btCollisionObject* newOb = new btCollisionObject();
-	newOb->setWorldTransform(tr);
-	newOb->setInterpolationWorldTransform( tr);
-	int lastDemo = (sizeof(demofncs)/sizeof(demofncs[0]))-1;
-
-	if (current_demo<0)
-		current_demo = lastDemo;
-	if (current_demo > lastDemo)
-		current_demo =0;
-		
-
-	if (current_demo>19)
-	{
-		newOb->setCollisionShape(m_collisionShapes[0]);
-	} else
-	{
-		newOb->setCollisionShape(m_collisionShapes[1]);
-	}
-
-	m_dynamicsWorld->addCollisionObject(newOb);
-
-	m_softBodyWorldInfo.m_sparsesdf.Reset();
-
-
-
-
-
-	
-
-	motorcontrol.goal = 0;
-	motorcontrol.maxtorque = 0;
-
-
-
-	m_softBodyWorldInfo.air_density		=	(btScalar)1.2;
-	m_softBodyWorldInfo.water_density	=	0;
-	m_softBodyWorldInfo.water_offset		=	0;
-	m_softBodyWorldInfo.water_normal		=	btVector3(0,0,0);
-	m_softBodyWorldInfo.m_gravity.setValue(0,-10,0);
-
-
-	m_autocam						=	false;
-	m_raycast						=	false;
-	m_cutting						=	false;
-	m_results.fraction				=	1.f;
-	
-	demofncs[current_demo](this);
-
-	m_guiHelper->autogenerateGraphicsObjects(m_dynamicsWorld);
+	clientResetScene();
 }
 
 
@@ -2329,7 +2253,6 @@ void	SoftDemo::exitPhysics()
 
 	//delete dynamics world
 	delete m_dynamicsWorld;
-	m_dynamicsWorld = 0;
 
 	//delete solver
 	delete m_solver;
@@ -2348,11 +2271,7 @@ void	SoftDemo::exitPhysics()
 }
 
 
-class CommonExampleInterface*    SoftDemoCreateFunc(struct CommonExampleOptions& options)
-{
-	current_demo = options.m_option;
-	return new SoftDemo(options.m_guiHelper);
-}
+
 
 
 
