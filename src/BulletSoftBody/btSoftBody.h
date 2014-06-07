@@ -492,7 +492,6 @@ public:
 		btScalar				maxvolume;		// Maximum volume ratio for pose
 		int						viterations;	// Velocities solver iterations
 		int						piterations;	// Positions solver iterations
-		int						citerations;	// Cluster solver iterations
 		int						collisions;		// Collisions flags
 	};
 	
@@ -645,7 +644,6 @@ public:
 	///Ray casting using rayFrom and rayTo in worldspace, (not direction!)
 	bool rayTest(const btVector3& rayFrom, const btVector3& rayTo, sRayCast& results);
 	void predictMotion(btScalar dt);
-	void solveConstraints();
 	static void solveClusters(const btAlignedObjectArray<btSoftBody*>& bodies);
 	void defaultCollisionHandler(const btCollisionObjectWrapper* pcoWrap);
 	void defaultCollisionHandler(btSoftBody* psb);
@@ -701,11 +699,6 @@ public:
 	void applyClusters(bool drift);
 	void dampClusters();
 	void applyForces();	
-	static void PSolve_Anchors(btSoftBody* psb,btScalar kst,btScalar ti);
-	static void PSolve_RContacts(btSoftBody* psb,btScalar kst,btScalar ti);
-	static void PSolve_SContacts(btSoftBody* psb,btScalar,btScalar ti);
-	static void PSolve_Links(btSoftBody* psb,btScalar kst,btScalar ti);
-	static void VSolve_Links(btSoftBody* psb,btScalar kst);
 	
 	/************************************************************************************
 	///Aero force
@@ -725,7 +718,8 @@ public:
 		};
 	};
 	
-	
+	///Generates and applies an aerodynamic force to a btSoftBody.
+	///Useful for simulating objects such as flags or falling papers.
 	struct AeroForce
 	{
 		eAeroModel::_ m_model; 		///<Aerodynamic model (default: V_Point)
@@ -753,8 +747,6 @@ public:
 	///Aero force
 	************************************************************************************/
 };
-
-
 
 
 #endif //_BT_SOFT_BODY_H
