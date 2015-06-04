@@ -492,6 +492,7 @@ public:
 		btScalar				maxvolume;		// Maximum volume ratio for pose
 		int						viterations;	// Velocities solver iterations
 		int						piterations;	// Positions solver iterations
+		int						citerations;	// Cluster solver iterations
 		int						collisions;		// Collisions flags
 	};
 	

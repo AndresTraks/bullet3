@@ -80,6 +80,7 @@ void	btSoftBody::initDefaults()
 	m_cfg.maxvolume		=	(btScalar)1;
 	m_cfg.viterations	=	0;
 	m_cfg.piterations	=	1;
+	m_cfg.citerations	=	4;
 	m_cfg.collisions	=	fCollision::Default;
 	m_pose.m_bvolume	=	false;
 	m_pose.m_bframe		=	false;

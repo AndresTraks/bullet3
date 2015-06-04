@@ -46,6 +46,8 @@ void btDefaultSoftBodySolver::updateSoftBodies( )
 
 void solveConstraintsSingleSoftBody(btSoftBody* softBody)
 {
+	softBody->applyClusters(false);
+
 	//Prepare links
 	for(int i = 0; i < softBody->m_links.size();++i)
 	{
@@ -102,6 +104,10 @@ void solveConstraintsSingleSoftBody(btSoftBody* softBody)
 			n.m_f = btVector3(0,0,0);		
 		}
 	}
+
+	// Apply clusters
+	softBody->dampClusters();
+	softBody->applyClusters(true);
 }
 
 void btDefaultSoftBodySolver::solveConstraints( float solverdt )

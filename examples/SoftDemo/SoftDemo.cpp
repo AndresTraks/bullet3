@@ -439,6 +439,7 @@ static void	Init_CapsuleCollision(SoftDemo* pdemo)
 	psb->setTotalMass(0.1);
 
 	psb->m_cfg.piterations = 10;
+	psb->m_cfg.citerations = 10;
 //	psb->m_cfg.viterations = 10;
 
 
